@@ -37,21 +37,11 @@ public class SableMixinPlugin implements IMixinConfigPlugin {
     @Override
     public void onLoad(final String mixinPackage) {
         try {
-            Class<?> loaderClass = Class.forName("net.fabricmc.loader.api.FabricLoader");
-            Object instance = loaderClass.getMethod("getInstance").invoke(null);
-            this.sableLoaded = (boolean) loaderClass.getMethod("isModLoaded", String.class).invoke(instance, "sable");
-            Constants.LOGGER.info("Sable detected via FabricLoader: {}", this.sableLoaded);
-        } catch (final Exception e) {
-            // Not on Fabric, fall back to checking for NeoForge mod list
-            try {
-                Class<?> modListClass = Class.forName("net.neoforged.fml.ModList");
-                Object modList = modListClass.getMethod("get").invoke(null);
-                this.sableLoaded = (boolean) modListClass.getMethod("isLoaded", String.class).invoke(modList, "sable");
-                Constants.LOGGER.info("Sable detected via ModList: {}", this.sableLoaded);
-            } catch (final Exception ex) {
-                this.sableLoaded = false;
-                Constants.LOGGER.info("Could not determine if Sable is loaded: {}", ex.getMessage());
-            }
+            Class.forName("dev.ryanhcode.sable.sublevel.system.SubLevelPhysicsSystem");
+            this.sableLoaded = true;
+            Constants.LOGGER.info("Sable detected");
+        } catch (final ClassNotFoundException e) {
+            this.sableLoaded = false;
         }
     }
 

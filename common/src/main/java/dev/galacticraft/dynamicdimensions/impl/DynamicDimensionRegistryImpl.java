@@ -49,15 +49,19 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.tags.TagKey;
 import net.minecraft.tags.TagManager;
 import net.minecraft.tags.TagNetworkSerialization;
+import net.minecraft.world.RandomSequences;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.ForcedChunksSavedData;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelSettings;
 import net.minecraft.world.level.biome.BiomeManager;
 import net.minecraft.world.level.border.BorderChangeListener;
 import net.minecraft.world.level.chunk.ChunkGenerator;
 import net.minecraft.world.level.dimension.DimensionType;
 import net.minecraft.world.level.dimension.LevelStem;
+import net.minecraft.world.level.levelgen.WorldOptions;
 import net.minecraft.world.level.storage.DerivedLevelData;
+import net.minecraft.world.level.storage.PrimaryLevelData;
 import net.minecraft.world.level.storage.WorldData;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -233,20 +237,36 @@ public class DynamicDimensionRegistryImpl implements DynamicDimensionRegistry {
             DynamicDimensionPhysicsCompat.stage(key, pendingProperties);
         }
 
-        final DerivedLevelData data = new DerivedLevelData(worldData, worldData.overworldData());
+        long customSeed = overworld.getSeed() + key.location().hashCode();
+        //final DerivedLevelData levelData = new DerivedLevelData(worldData, worldData.overworldData());
+        PrimaryLevelData levelData = new PrimaryLevelData(
+                new LevelSettings(
+                        worldData.getLevelName()+"_"+key.location().getPath(),
+                        worldData.getGameType(),
+                        worldData.isHardcore(),
+                        worldData.getDifficulty(),
+                        worldData.isAllowCommands(),
+                        worldData.getGameRules(),
+                        worldData.getDataConfiguration()
+                ),
+                new WorldOptions(0,false,false),        // the serverlevel does not care what you provide
+                PrimaryLevelData.SpecialWorldProperty.NONE,
+                worldData.worldGenSettingsLifecycle()
+        );
+
         final ServerLevel level = new ServerLevel(
                 this.server,
                 ((MinecraftServerAccessor) this.server).getExecutor(),
                 ((MinecraftServerAccessor) this.server).getStorageSource(),
-                data,
+                levelData,
                 key,
                 stem,
                 ((MinecraftServerAccessor) this.server).getProgressListenerFactory().create(10),
                 worldData.isDebugWorld(),
-                BiomeManager.obfuscateSeed(worldData.worldGenOptions().seed()),
+                BiomeManager.obfuscateSeed(customSeed),
                 ImmutableList.of(),
-                false,
-                null
+                true,
+                new RandomSequences(customSeed)
         );
         overworld.getWorldBorder().addListener(new BorderChangeListener.DelegateBorderChangeListener(level.getWorldBorder()));
 
@@ -265,7 +285,7 @@ public class DynamicDimensionRegistryImpl implements DynamicDimensionRegistry {
 
         level.setSpawnSettings(this.server.isSpawningMonsters(), this.server.isSpawningAnimals());
 
-        ((DynamicDimensionProvider) this.server).dynamicdimensions$registerLevel(level);
+        ((DynamicDimensionProvider) this.server).dynamicdimensions$registerLevel(level, key);
 
         // Belt-and-suspenders apply after level exists, covers setDimensionProperties called post-creation.
         if (pendingProperties != null) {

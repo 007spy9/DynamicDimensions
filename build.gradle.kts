@@ -64,6 +64,8 @@ version = buildString {
 }
 description = modDescription
 
+version = "0.10.0+2-patched"
+
 println("$modName: $version")
 
 subprojects {

@@ -63,6 +63,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import java.io.IOException;
 import java.net.Proxy;
 import java.nio.file.Path;
+import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -84,7 +85,7 @@ public abstract class MinecraftServerMixin implements DynamicDimensionProvider {
     public abstract LayeredRegistryAccess<RegistryLayer> registries();
 
     @Unique
-    private final @NotNull List<ServerLevel> pendingLevels = new ArrayList<>();
+    private final @NotNull List<Map.Entry<ServerLevel, ResourceKey<Level>>> pendingLevels = new ArrayList<>();
     @Unique
     private final @NotNull List<DimensionRemovalTicket> pendingDeletions = new ArrayList<>();
     @Unique
@@ -131,18 +132,18 @@ public abstract class MinecraftServerMixin implements DynamicDimensionProvider {
 
     @Override
     public boolean dynamicdimensions$isIdPendingCreation(@NotNull ResourceKey<Level> key) {
-        for (ServerLevel pendingLevel : this.pendingLevels) {
-            if (pendingLevel.dimension().equals(key)) return true;
+        for (Map.Entry<ServerLevel, ResourceKey<Level>> entry : this.pendingLevels) {
+            if (entry.getValue().equals(key)) return true;
         }
         return false;
     }
 
     @Override
-    public void dynamicdimensions$registerLevel(ServerLevel level) {
+    public void dynamicdimensions$registerLevel(ServerLevel level, ResourceKey<Level> key) {
         if (this.tickingLevels) {
-            this.pendingLevels.add(level); //prevent co-modification
+            this.pendingLevels.add(new AbstractMap.SimpleEntry<>(level, key));
         } else {
-            this.registerLevel(level);
+            this.registerLevel(level, key);
         }
     }
 
@@ -154,8 +155,8 @@ public abstract class MinecraftServerMixin implements DynamicDimensionProvider {
     @Inject(method = "tickChildren", at = @At(value = "HEAD"))
     private void addLevels(BooleanSupplier shouldKeepTicking, CallbackInfo ci) {
         if (!this.pendingLevels.isEmpty()) {
-            for (ServerLevel level : this.pendingLevels) {
-                this.registerLevel(level);
+            for (Map.Entry<ServerLevel, ResourceKey<Level>> entry : this.pendingLevels) {
+                this.registerLevel(entry.getKey(), entry.getValue());
             }
             this.pendingLevels.clear();
         }
@@ -206,10 +207,10 @@ public abstract class MinecraftServerMixin implements DynamicDimensionProvider {
     }
 
     @Unique
-    private void registerLevel(ServerLevel level) {
-        DimensionAddedCallback.invoke(level.dimension(), level);
-        this.levels.put(level.dimension(), level);
-        this.dynamicDimensions.add(level.dimension());
+    private void registerLevel(ServerLevel level, ResourceKey<Level> key) {
+        DimensionAddedCallback.invoke(key, level);
+        this.levels.put(key, level);
+        this.dynamicDimensions.add(key);
         level.tick(() -> true);
     }
 

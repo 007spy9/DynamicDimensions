@@ -37,7 +37,7 @@ public interface DynamicDimensionProvider {
 
     boolean dynamicdimensions$isIdPendingCreation(@NotNull ResourceKey<Level> key);
 
-    void dynamicdimensions$registerLevel(ServerLevel level);
+    void dynamicdimensions$registerLevel(ServerLevel level, ResourceKey<Level> key);
 
     @NotNull DynamicDimensionRegistry dynamicdimensions$registry();
 }
