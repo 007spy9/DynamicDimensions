@@ -22,11 +22,10 @@
 
 package dev.galacticraft.dynamicdimensions.impl.mixin;
 
-import net.minecraft.server.level.ChunkMap;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.gen.Accessor;
 
-@Mixin(ChunkMap.class)
+@Mixin(targets = "net.minecraft.server.level.ChunkMap")
 public interface ChunkMapAccessor {
     @Accessor("serverViewDistance")
     int getViewDistance();

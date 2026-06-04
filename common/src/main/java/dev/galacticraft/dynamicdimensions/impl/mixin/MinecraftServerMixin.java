@@ -37,7 +37,6 @@ import net.minecraft.core.LayeredRegistryAccess;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.RegistryLayer;
 import net.minecraft.server.Services;
 import net.minecraft.server.WorldStem;
@@ -69,7 +68,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.BooleanSupplier;
 
-@Mixin(MinecraftServer.class)
+@Mixin(targets = "net.minecraft.server.MinecraftServer")
 public abstract class MinecraftServerMixin implements DynamicDimensionProvider {
     @Shadow
     @Final
@@ -95,7 +94,7 @@ public abstract class MinecraftServerMixin implements DynamicDimensionProvider {
 
     @Inject(method = "<init>", at = @At("RETURN"))
     private void initDynamicDimensions(Thread thread, LevelStorageSource.LevelStorageAccess levelStorageAccess, PackRepository packRepository, WorldStem worldStem, Proxy proxy, DataFixer dataFixer, Services services, ChunkProgressListenerFactory chunkProgressListenerFactory, CallbackInfo ci) {
-        this.dynamicDimensions = new DynamicDimensionRegistryImpl((MinecraftServer) (Object) this);
+        this.dynamicDimensions = new DynamicDimensionRegistryImpl((net.minecraft.server.MinecraftServer) (Object) this);
     }
 
     /**
@@ -185,7 +184,7 @@ public abstract class MinecraftServerMixin implements DynamicDimensionProvider {
 
             List<ServerPlayer> players = new ArrayList<>(level.players()); // prevent co-modification
             for (ServerPlayer player : players) {
-                playerRemover.removePlayer((MinecraftServer) (Object) this, player);
+                playerRemover.removePlayer((net.minecraft.server.MinecraftServer) (Object) this, player);
             }
 
             level.save(null, true, level.noSave);

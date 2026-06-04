@@ -50,4 +50,17 @@ public final class DynamicDimensionPhysicsCompat {
             SableDimensionPhysicsCompat.stage(key, properties);
         }
     }
+
+    /**
+     * Flush staged physics properties into Sable's DIMENSION_PHYSICS_DATA before ServerLevel is constructed.
+     * Previously done via a mixin on SubLevelPhysicsSystem.initialize(), but that mixin caused
+     * SubLevelPhysicsSystem to be loaded during mixin preparation at boot, cascading into Minecraft
+     * codec classes (ExtraCodecs, ResourceLocation, etc.) before other mods could apply their mixins.
+     * Calling this directly before new ServerLevel(...) achieves identical timing without the boot issue.
+     */
+    public static void flush(final ResourceKey<Level> key) {
+        if (Services.PLATFORM.isModLoaded(SABLE_MOD_ID)) {
+            SableDimensionPhysicsCompat.flushForLevel(key);
+        }
+    }
 }

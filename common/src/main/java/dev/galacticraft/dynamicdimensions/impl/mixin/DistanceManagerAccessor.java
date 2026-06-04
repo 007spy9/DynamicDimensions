@@ -22,11 +22,10 @@
 
 package dev.galacticraft.dynamicdimensions.impl.mixin;
 
-import net.minecraft.server.level.DistanceManager;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.gen.Accessor;
 
-@Mixin(DistanceManager.class)
+@Mixin(targets = "net.minecraft.server.level.DistanceManager")
 public interface DistanceManagerAccessor {
     @Accessor("simulationDistance")
     int getSimulationDistance();

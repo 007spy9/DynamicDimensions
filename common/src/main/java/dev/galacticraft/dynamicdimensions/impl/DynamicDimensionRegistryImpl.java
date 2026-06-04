@@ -230,11 +230,14 @@ public class DynamicDimensionRegistryImpl implements DynamicDimensionRegistry {
     }
 
     private @NotNull ServerLevel createDynamicLevel(ResourceKey<Level> key, WorldData worldData, LevelStem stem, ServerLevel overworld) {
-        // Stage physics properties before ServerLevel construction so Sable's
-        // SubLevelPhysicsSystem.initialize() mixin can flush them before reading gravity.
+        // Stage and immediately flush physics properties into Sable's DIMENSION_PHYSICS_DATA
+        // before ServerLevel construction so Sable reads the correct gravity at initialize() time.
+        // Previously the flush was done via a mixin on SubLevelPhysicsSystem.initialize(), but that
+        // mixin caused a boot-time class-loading cascade. Flushing directly here is equivalent.
         DynamicDimensionProperties pendingProperties = this.dimensionProperties.get(key);
         if (pendingProperties != null) {
             DynamicDimensionPhysicsCompat.stage(key, pendingProperties);
+            DynamicDimensionPhysicsCompat.flush(key);
         }
 
         long customSeed = overworld.getSeed() + key.location().hashCode();

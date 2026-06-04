@@ -22,7 +22,6 @@
 
 package dev.galacticraft.dynamicdimensions.impl.mixin;
 
-import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.progress.ChunkProgressListenerFactory;
 import net.minecraft.world.level.storage.LevelStorageSource;
 import org.spongepowered.asm.mixin.Mixin;
@@ -30,7 +29,7 @@ import org.spongepowered.asm.mixin.gen.Accessor;
 
 import java.util.concurrent.Executor;
 
-@Mixin(MinecraftServer.class)
+@Mixin(targets = "net.minecraft.server.MinecraftServer")
 public interface MinecraftServerAccessor {
     @Accessor
     LevelStorageSource.LevelStorageAccess getStorageSource();
@@ -42,5 +41,5 @@ public interface MinecraftServerAccessor {
     ChunkProgressListenerFactory getProgressListenerFactory();
 
     @Accessor
-    MinecraftServer.ReloadableResources getResources();
+    net.minecraft.server.MinecraftServer.ReloadableResources getResources();
 }

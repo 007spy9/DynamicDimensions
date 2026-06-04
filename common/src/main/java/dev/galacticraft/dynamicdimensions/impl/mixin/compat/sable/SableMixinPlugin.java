@@ -36,13 +36,22 @@ public class SableMixinPlugin implements IMixinConfigPlugin {
 
     @Override
     public void onLoad(final String mixinPackage) {
+        // IMPORTANT: Do NOT use Class.forName or ClassLoader.getResource here.
+        // - Class.forName loads SubLevelPhysicsSystem, causing Mixin to reflect on
+        //   SubLevelPhysicsSystemMixin's @Shadow field type (ServerLevel), loading
+        //   ServerLevel → Level before other mods' Level mixins are registered.
+        // - ClassLoader.getResource touches the module layer for Sable's module,
+        //   which initialises Sable's DimensionPhysics/DimensionPhysicsData classes
+        //   (they import Minecraft codecs), cascading into ExtraCodecs and friends.
+        // MixinService.getResourceAsStream reads raw .class bytes via ASM without
+        // triggering JVM class loading or any static initialisers — safe at boot.
         try {
-            Class.forName("dev.ryanhcode.sable.sublevel.system.SubLevelPhysicsSystem");
-            this.sableLoaded = true;
-            Constants.LOGGER.info("Sable detected");
-        } catch (final ClassNotFoundException e) {
+            this.sableLoaded = org.spongepowered.asm.service.MixinService.getService()
+                    .getResourceAsStream("dev/ryanhcode/sable/sublevel/system/SubLevelPhysicsSystem.class") != null;
+        } catch (final Exception e) {
             this.sableLoaded = false;
         }
+        if (this.sableLoaded) Constants.LOGGER.info("Sable detected");
     }
 
     @Override
