@@ -314,7 +314,22 @@ public class DynamicDimensionRegistryImpl implements DynamicDimensionRegistry {
                 break;
             }
         }
-        this.server.getPlayerList().broadcastAll(new ClientboundUpdateTagsPacket(TagNetworkSerialization.serializeTagsToNetwork(this.server.registries())));
+
+        // Only DIMENSION_TYPE tag membership can have changed here - a new dynamic dimension
+        // type was just registered. serializeTagsToNetwork() re-serializes tags for *every*
+        // network-synced registry in the game (blocks, items, entities, biomes, etc.), and this
+        // method broadcasts the result to every connected player on every single dynamic
+        // dimension creation. In a large modpack that full-registry payload can be sizeable
+        // enough (and frequent enough, since it fires per dynamic dimension) to cause
+        // unrelated players anywhere on the server to be dropped by a packet framing error.
+        // Scope the broadcast down to the one registry that actually changed.
+        Map<ResourceKey<? extends Registry<?>>, TagNetworkSerialization.NetworkPayload> allTags =
+                TagNetworkSerialization.serializeTagsToNetwork(this.server.registries());
+        TagNetworkSerialization.NetworkPayload dimensionTypeTags = allTags.get(Registries.DIMENSION_TYPE);
+        if (dimensionTypeTags != null) {
+            this.server.getPlayerList().broadcastAll(
+                    new ClientboundUpdateTagsPacket(Map.of(Registries.DIMENSION_TYPE, dimensionTypeTags)));
+        }
     }
 
     public void remove(ResourceKey<Level> key) {
